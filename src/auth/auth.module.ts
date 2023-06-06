@@ -5,10 +5,12 @@ import { IamModule } from 'src/iam/iam.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
+import { MongooseModule } from '@nestjs/mongoose';
+import { TokenBlackListSchema } from './entities/TokenBlockList.schema';
 
 @Module({
   imports:[
-    // IamModule,
+    MongooseModule.forFeature([{name: 'token-blockList', schema:TokenBlackListSchema}]),
     PassportModule,
     JwtModule.register({
       secret: '' + process.env.JWT_SECRET,

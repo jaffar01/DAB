@@ -7,12 +7,14 @@ import { IamModule } from './iam/iam.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ProviderModule } from './provider/provider.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGO_CONNECTION_URI, {}),
-    IamModule, AuthModule
+    IamModule, AuthModule, ProviderModule, SubscriptionsModule
   ],
   // controllers: [ IamController, AuthController],
   // providers: [ IamService, AuthService],

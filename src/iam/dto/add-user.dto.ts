@@ -43,9 +43,9 @@ export class AddUserDTO {
   @IsJSON()
   roles: string;
 
-  // @ApiPropertyOptional()
-  // @IsOptional()
-  // // @IsNotEmpty()
-  // @IsString()
-  // vendorId?: string;
+  @ApiPropertyOptional()
+  @IsOptional()
+  // @IsNotEmpty()
+  @IsString()
+  providerId?: string;
 }

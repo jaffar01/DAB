@@ -10,6 +10,7 @@ import { permissionValidationSchema } from './helpers/permission-schema';
 import { ROLES } from 'src/constants';
 import { AddRoleDto } from './dto/add-role.dto';
 import { PERMISSION_TYPES } from './iam.constants';
+import { ProviderService } from 'src/provider/provider.service';
 
 @Injectable()
 export class IamService {
@@ -18,7 +19,9 @@ export class IamService {
     private readonly iamRolesModel: Model<IamRolesModel>,
     @InjectModel('iam-users')
     private readonly iamUsersModel: Model<IamUsersModel>,
-  ){}
+    @Inject(forwardRef(() => ProviderService))
+    private readonly providerService: ProviderService
+  ) { }
 
 
   /**
@@ -83,7 +86,33 @@ export class IamService {
         country: iamUserRegistrationDTO.country || null,
         rolesId: iamRolesId,
       });
+      console.warn(iamUser);
+      
       await delete iamUser.password;
+      if ((roles.includes(ROLES.PROVIDER_ADMIN)) || roles.includes(ROLES.RECEPTIONIST)) {
+        if (iamUserRegistrationDTO.providerId) {
+          const provider = await this.providerService.updateProviderDetails(
+            iamUserRegistrationDTO.providerId,
+            {
+              //  users: JSON.stringify([(iamUser._id).toString()]),
+              users: JSON.stringify([(iamUser._id).toString()])
+              // servicesOffered: '',
+              // registrationNumber: ''
+            }
+          );
+          console.warn(provider);
+          
+        } else {
+          const [error, response] = await this.deleteUser(iamUser._id);
+          if (error) return error;
+          if (response.isDeleted) {
+            return {
+              isProviderError: true,
+              message: 'Kindly give providerIf for adding PROVIDER ADMIN / RECEPTIONIST'
+            }
+          }
+        }
+      }
       return iamUser;
     } catch (err) {
       throw new Error(err);
@@ -103,48 +132,68 @@ export class IamService {
     }
   }
 
- /******
-  * Get all users details
-  */
- async getAllUsers(){
-  try {
-    const users = await this.iamUsersModel.find({isDeleted:false}).select('-password');
-    return users;
-  } catch (err) {
-    throw new Error(err);
+  /******
+   * Get all users details
+   */
+  async getAllUsers() {
+    try {
+      const users = await this.iamUsersModel.find({ isDeleted: false }).select('-password');
+      return users;
+    } catch (err) {
+      throw new Error(err);
+    }
   }
- }
 
- /****
-  * get a user details by one of below unique properties
-  * 1. email 2.mobileNumber 3. userid
-  **/
- async getUserDetails({
-  email= null,
-  mobileNumber = null,
-  userId = null
- }){
-  try {
-    const filter: any = {};
-    if (email && email.length !== 0){
-      filter.email = email;
+  /****
+   * get a user details by one of below unique properties
+   * 1. email 2.mobileNumber 3. userid
+   **/
+  async getUserDetails({
+    email = null,
+    mobileNumber = null,
+    userId = null
+  }) {
+    try {
+      const filter: any = {};
+      if (email && email.length !== 0) {
+        filter.email = email;
+      }
+      if (mobileNumber && mobileNumber.length !== 0) {
+        filter.mobileNumber = mobileNumber;
+      }
+      if (userId && userId.length !== 0) {
+        filter._id = new Types.ObjectId(userId);
+      }
+      const userDetails = <IamUsersModel & { roleDetails: Array<IamRolesModel> }>await this.iamUsersModel.findOne({
+        ...filter,
+        isActive: true,
+        isDeleted: false
+      })
+        .populate('roleDetails')
+        .lean();
+      return userDetails;
+    } catch (err) {
+      throw new Error(err);
     }
-    if (mobileNumber && mobileNumber.length !== 0){
-      filter.mobileNumber = mobileNumber;
-    }
-    if (userId && userId.length !== 0){
-      filter._id = new Types.ObjectId(userId);
-    }
-    const userDetails = <IamUsersModel & {roleDetails:Array<IamRolesModel>}>await this.iamUsersModel.findOne({
-      ...filter,
-      isActive:true,
-      isDeleted:false
-    })
-    .populate('roleDetails')
-    .lean();
-    return userDetails;
-  } catch (err) {
-   throw new Error(err);
   }
- }
+
+  async deleteUser(userId) {
+    try {
+      const deletedUser = await this.iamUsersModel.deleteOne({ _id: userId });
+      if (deletedUser) {
+        return [null, {
+          isDeleted: true,
+          message: 'User deleted successfully',
+        }];
+      } else {
+        return [{
+          isDeleted: false,
+          message: 'Error in User deletion',
+        }]
+      }
+    } catch (err) {
+      console.error('ERROR', err);
+      throw new Error(err);
+    }
+  }
 }
