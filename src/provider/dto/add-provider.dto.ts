@@ -44,7 +44,7 @@ export class AddProviderDTO {
   readonly landline?: string;
 
   @ApiProperty()
-  @IsNotEmpty()
+  // @IsNotEmpty()
   @IsPhoneNumber()
   readonly mobileNumber: string;
 

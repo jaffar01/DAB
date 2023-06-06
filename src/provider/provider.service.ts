@@ -23,8 +23,8 @@ export class ProviderService {
 
   // create the provider from the DB
   async registerProvider(addProvider: AddProviderDTO, files) {
-    let address, availableTimings, isNewuniqueCode, accountDetails, subscriptionId, commissions
-    let roles = [ROLES.PROVIDER];
+    let address, availableTimings, isNewuniqueCode, accountDetails, subscription, commissions
+    let roles = [ROLES.PROVIDER_ADMIN];
     if (addProvider.address) address = JSON.parse(addProvider.address);
     if (addProvider.availableTimings) availableTimings = JSON.parse(addProvider.availableTimings);
     if (addProvider.commissions) commissions = JSON.parse(addProvider.commissions);
@@ -41,14 +41,14 @@ export class ProviderService {
 
     //getting subscription details
     try {
-      subscriptionId = await this.subscriptionsService.registerSubscription({
+      subscription = await this.subscriptionsService.registerSubscription({
         plan: addProvider.subscriptionPlan,
         validity: addProvider.subscriptionValidity,
         startDate: addProvider.subscriptionEndDate,
         endDate: addProvider.subscriptionEndDate,
         paymentStatus: addProvider.subscriptionPaymentStatus
       });
-      if (!subscriptionId) return ['Unable to create Subscription']
+      if (!subscription) return ['Unable to create Subscription']
     } catch (err) {
       throw new Error(err)
     }
@@ -122,19 +122,20 @@ export class ProviderService {
         coordinates: null,
         email: addProvider.email,
         landline: addProvider.landline,
-        mobileNumer: addProvider.mobileNumber,
+        mobileNumber: addProvider.mobileNumber,
         // photos:addProvider.photos,
         // documents:addProvider.documents
         commissions: commissions,
         accountDetails: addProvider.accountDetails,
-        subscriptionId: subscriptionId,
+        subscriptionId: subscription._id,
         availableTimings: availableTimings,
         isActive: true,
         isDeleted: false
 
       });
       if (!provider) return [{ message: 'Unable to create provider' }];
-
+      console.warn(provider);
+      
       //admin user creation
       try {
         const userDetails = await this.iamService.registerUser({
@@ -146,6 +147,8 @@ export class ProviderService {
           roles: JSON.stringify(roles),
           providerId: provider._id.toString()
         });
+        console.warn(provider);
+        
         if (!userDetails) {
           await this.deleteProvider(provider._id);
           return [{ message: 'Unable to create user' }]
@@ -177,9 +180,9 @@ export class ProviderService {
   }
 
   async updateProviderDetails(
-    user: JWTUser = null,
     providerId,
-    updateProviderDTO: updateProviderDTO
+    updateProviderDTO: updateProviderDTO,
+    user: JWTUser = null,
   ) {
     let address,
       accountDetails,
@@ -251,7 +254,7 @@ export class ProviderService {
       }
 
       if (role === ROLES.ADMIN) {
-        if (updateProviderDTO.email && updateProviderDTO.email !== updateProviderDTO.email) {
+        if (updateProviderDTO.email && updateProviderDTO.email !== provider.email) {
           provider.email = updateProviderDTO.email
         }
         if (
@@ -262,10 +265,10 @@ export class ProviderService {
         provider.commissions = commissions;
         //
       }
-      if (updateProviderDTO.providerType) provider.providerType = updateProviderDTO.providerType;
-      if (updateProviderDTO.name) provider.name = updateProviderDTO.name;
-      if (updateProviderDTO.servicesOffered) provider.servicesOffered = updateProviderDTO.servicesOffered;
-      if (updateProviderDTO.registrationNumber) provider.registrationNumber = updateProviderDTO.registrationNumber;
+      if (updateProviderDTO.providerType && updateProviderDTO.providerType.length !== 0) provider.providerType = updateProviderDTO.providerType;
+      if (updateProviderDTO.name && updateProviderDTO.name.length !== 0) provider.name = updateProviderDTO.name;
+      if (updateProviderDTO.servicesOffered && updateProviderDTO.servicesOffered.length !== 0) provider.servicesOffered = updateProviderDTO.servicesOffered;
+      if (updateProviderDTO.registrationNumber&& updateProviderDTO.registrationNumber.length !== 0) provider.registrationNumber = updateProviderDTO.registrationNumber;
       if (updateProviderDTO.address) provider.address = address;
       if (updateProviderDTO.country) provider.country = updateProviderDTO.country;
       if (updateProviderDTO.landline) provider.landline = updateProviderDTO.landline;
@@ -274,12 +277,16 @@ export class ProviderService {
       if (updateProviderDTO.availableTimings) provider.availableTimings = availableTimings;
       if (updateProviderDTO.accountDetails) provider.accountDetails = accountDetails;
       if (updateProviderDTO.users) {
-        provider.doctors.push(...users?.ma((user) => new Types.ObjectId(user)));
+        users = JSON.parse(updateProviderDTO.users);
+        provider.users.push(...users?.map((user) => new Types.ObjectId(user)));
       }
+      // console.warn(provider);
+      
       provider.save();
+      console.warn(provider);
       return provider;
     } catch (err) {
-      console.log(err);
+      console.log(err);   
       throw new Error(err);
     }
 

@@ -24,12 +24,12 @@ export class updateProviderDTO {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  readonly servicesOffered: string;
+  readonly servicesOffered?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  readonly registrationNumber: string;
+  readonly registrationNumber?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

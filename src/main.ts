@@ -34,8 +34,8 @@ async function bootstrap() {
 
   // OpenAPI Document Configuration
   const options = new DocumentBuilder()
-    .setTitle('Nest Boilerplate API Documentation')
-    .setDescription('The complete Open API document for Nest Boilerplate')
+    .setTitle('DABS Boilerplate API Documentation')
+    .setDescription('The complete Open API document for DABS Boilerplate')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

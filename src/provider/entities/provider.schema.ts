@@ -236,13 +236,13 @@ export const ProvidersSchema = new Schema({
   commissions:{
     type:[commission]
   },
-  doctors:{
+  users:{
     type:[Types.ObjectId],
   },
   accountDetails:{
     types:AccountDetails
   },
-  subsriptionId:{
+  subscriptionId:{
     type: [Types.ObjectId],
     required: true,
   },
@@ -339,7 +339,7 @@ export interface providersModel extends Document {
   photos:[string],
   documents:[string],
   commissions:[commission];
-  doctors:[Types.ObjectId],
+  users:[Types.ObjectId],
   accountDetails: AccountDetails;
   subscriptionId: [Types.ObjectId];
   availableTimings?: AvailableTime;
