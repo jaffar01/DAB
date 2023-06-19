@@ -9,12 +9,13 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ProviderModule } from './provider/provider.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { DoctorsModule } from './doctors/doctors.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(process.env.MONGO_CONNECTION_URI, {}),
-    IamModule, AuthModule, ProviderModule, SubscriptionsModule
+    IamModule, AuthModule, ProviderModule, SubscriptionsModule, DoctorsModule
   ],
   // controllers: [ IamController, AuthController],
   // providers: [ IamService, AuthService],

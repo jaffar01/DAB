@@ -9,6 +9,7 @@ import { ROLES } from 'src/constants';
 import { JWTUser } from 'src/common/interfaces/JWT-user';
 import { generateUniqueCode } from './helper/uniqueCode_helper';
 import { updateProviderDTO } from './dto/update-provider.dto';
+import { GetAllProvidersDTO } from './dto/getAllProviders.dto';
 
 @Injectable()
 export class ProviderService {
@@ -310,6 +311,58 @@ export class ProviderService {
       }
     } catch (err) {
       console.log(err);
+      throw new Error(err);
+    }
+  }
+
+  // get all provider details
+  async getAllProviders(getAllProvidersDTO:GetAllProvidersDTO){
+    try {
+      const filter:any = {};
+      if(getAllProvidersDTO.pincode) filter['address.pincode'] = getAllProvidersDTO.pincode;
+      if(getAllProvidersDTO.state) filter['address.state'] = getAllProvidersDTO.state;
+      if(getAllProvidersDTO.providerId) filter.providerId = getAllProvidersDTO.providerId;
+      if(getAllProvidersDTO.providerType) filter.providerType = new RegExp(`${getAllProvidersDTO.providerType}`, 'i');
+      if(getAllProvidersDTO.name) filter.name = new RegExp(`${getAllProvidersDTO.name}`, 'i');
+      if(getAllProvidersDTO.landline) filter.landline = getAllProvidersDTO.landline;
+      if(getAllProvidersDTO.mobileNumber) filter.mobileNumber = getAllProvidersDTO.mobileNumber;
+      if(getAllProvidersDTO.user) filter.user ={
+        $in:new Types.ObjectId(getAllProvidersDTO.user)
+      };
+      const providers = await this.providerModel.find({
+        isDeleted:false,
+        ...filter
+      })
+      return providers
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  async getProviderDetails(providerId){
+    try {
+      const provider = await this.providerModel.findOne({
+        _id:new Types.ObjectId(providerId),
+        isDeleted:false
+      }).populate('subscriptionDetails').lean();
+      return [null,provider];
+    } catch (err) {
+      throw new Error(err);
+    }
+  }
+
+  async getProviderId(IamUserId){
+    try {
+      const providerDetails = await this.providerModel.find({
+        users:{$in:new Types.ObjectId(IamUserId)},
+        isDeleted:false
+      })
+      if(providerDetails && providerDetails.length !==0){
+        return providerDetails[0]._id;
+      }else{
+        return null
+      }
+    } catch (err) {
       throw new Error(err);
     }
   }
